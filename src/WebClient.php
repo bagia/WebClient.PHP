@@ -1,29 +1,38 @@
 <?php
 /**
- * Webclient
- *
- * Helper class to browse the web
- *
+ * @brief Helper class to browse the web
  * @author bagia
  */
-
 class WebClient
 {
-	private $ch;
+	private $ch; // cURL handle
 	
-	private $url;
-	private $maxRedirs;
-	private $currentRedirs;
+	private $url; // current URL
+	private $maxRedirs; // max allowed redirects
+	private $currentRedirs; // current number of redirects followed
 
-	private $headers;
-	private $cookie;
-	private $referer;
-	private $html;
-	
-	public function Navigate($url, $post = array()) 
+	private $headers; // HTTP headers
+	private $cookie; // current cookie value
+	private $referer; // current referer
+	private $html; // current HTML content
+
+    /**
+     * Navigate to the specified URL
+     * Raises a warning if too many redirects have been followed
+     * Can post a file if its post value is prefixed by @
+     * @param $url URL to navigate to
+     * @param array $post Post content of the form array( 'name' => 'value' )
+     * @return mixed FALSE or the HTML content of the page
+     */
+    public function Navigate($url, $post = array())
 	{
 		if ($this->currentRedirs > $this->maxRedirs)
-			 trigger_error('Too many redirects.', E_USER_WARNING);
+        {
+            // We overtook the allowed number of redirects.
+            $this->currentRedirs = 0;
+            trigger_error('Too many redirects.', E_USER_WARNING);
+            return FALSE;
+        }
 			 
 		$this->url = $url;
 		
@@ -58,7 +67,7 @@ class WebClient
 			
 		}
 		
-		// We arrived to destination (hopefully).
+		// We arrived to destination
 		$this->currentRedirs = 0;
 		
 		if ($response['Code'] !== 200)
@@ -66,9 +75,18 @@ class WebClient
 			
 		return $response['Html'];
 	}
-	
-	public function getInputs() 
+
+    /**
+     * Retrieve all the <input /> tags of the page, and returns an array
+     * containing their name and values.
+     * @return array of the form array ( 'name' => 'value' )
+     */
+    public function getInputs()
 	{
+        // TODO: A few more cases should be taken in account
+        // - Several form tags on the page
+        // - Other input tags such as textarea
+
 		if (empty($this->html))
 			return array();
 	
@@ -90,8 +108,13 @@ class WebClient
 		
 		return $return;
 	}
-	
-	public function getHeader($name)
+
+    /**
+     * Get the value of a specific header
+     * @param $name Header name
+     * @return mixed the value of the header, NULL if the header is not available
+     */
+    public function getHeader($name)
 	{
 		$headers = $this->getHeaders();
 		if ( isset($headers[$name]) )
@@ -179,18 +202,29 @@ class WebClient
 	//
 	// Some helpers
 	//
-	
-	public function getHtml() 
+
+    /**
+     * @return string
+     */
+    public function getHtml()
 	{
 		return $this->html;
 	}
-	
-	public function getUrl() 
+
+    /**
+     * The URL of the current page. It is updated when a redirect is followed.
+     * @return string URL of the current page
+     */
+    public function getUrl()
 	{
 		return $this->url;
 	}
-	
-	public function setMaxRedirs($maxRedirs = 5) {
+
+    /**
+     * Set the maximum number of redirects to follow before failing.
+     * @param int $maxRedirs max number of redirects
+     */
+    public function setMaxRedirs($maxRedirs = 5) {
 		$this->maxRedirs = $maxRedirs;
 	}
 	
