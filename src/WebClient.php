@@ -167,7 +167,12 @@ class WebClient
 		$retcode = curl_getinfo($this->ch, CURLINFO_HTTP_CODE);
 		
 		// Separate Headers and HTML
-		$split = explode("\r\n\r\n", $output, 2);
+		$content = $output;
+        do {
+            $split = explode("\r\n\r\n", $content, 2);
+            $head = reset($split);
+            $content = end($split);
+        } while (preg_match('#http/[0-9].[0-9] 100 continue#i', $head));
 		if (count($split) > 1)
 			$html = trim($split[1]);
 		$h = trim($split[0]);
