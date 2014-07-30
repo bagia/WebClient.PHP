@@ -51,7 +51,7 @@ class WebClient
 
         // Moved
         if ($this->currentRedirs <= $this->maxRedirs
-            && ($response['Code'] == 301 || $response['Code'] == 302)) {
+            && ($response['Code'] >= 300 && $response['Code'] < 400)) {
             $url = $this->getHeader('Location');
             if ( !is_null($url) ) {
                 if (stripos($url, 'http') !== 0) {
